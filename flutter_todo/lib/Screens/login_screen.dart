@@ -40,10 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Check the response status code
         if (response.statusCode == 200) {
-          String token = response.body.trim();
+          var data = jsonDecode(response.body);
+          String token = data['token'];
+          Map<String, dynamic> user = data['user'];
           // Save the token in local storage
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
+          await prefs.setString('user', jsonEncode(user));
 
           // Navigate back to the home screen
           Navigator.pop(context); // Close the login screen

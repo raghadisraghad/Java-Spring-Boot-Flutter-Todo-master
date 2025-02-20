@@ -11,14 +11,20 @@ class UsersData extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateUser(User user) {
-    DatabaseServices.updateUser(user);
-    notifyListeners();
+  Future<bool> updateUser(User user) async {
+    bool success = await DatabaseServices.updateUser(user);
+    if (success) {
+      notifyListeners();
+    }
+    return success;
   }
 
-  void deleteUser(User user) {
-    users.remove(user);
-    DatabaseServices.deleteUser(user.id);
-    notifyListeners();
+  Future<bool> deleteUser(User user) async {
+    bool success = await DatabaseServices.deleteUser(user.id);
+    if (success) {
+      users.remove(user);
+      notifyListeners();
+    }
+    return success;
   }
 }

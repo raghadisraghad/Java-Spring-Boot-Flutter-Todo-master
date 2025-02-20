@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todospring/models/task.dart';
 import 'package:todospring/models/tasks_data.dart';
+import 'package:todospring/Utils/Token.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({Key? key}) : super(key: key);
@@ -12,7 +14,23 @@ class AddTaskScreen extends StatefulWidget {
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   String taskTitle = "";
-  int userId = 1;
+  int userId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    var token = await Token.getToken();
+    if (token != null) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      setState(() {
+        userId = int.parse(decodedToken['sub']);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -8,9 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -27,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ResponseEntity<String> Login(UserLogin userLogin) {
+    public ResponseEntity<?> Login(UserLogin userLogin) {
         Optional<User> userOptional = userRepository.findByUsername(userLogin.getUsername());
 
         if (userOptional.isEmpty()) {
@@ -43,6 +41,10 @@ public class AuthServiceImpl implements AuthService {
         List<String> roles = Collections.emptyList();
         String token = jwt.generateToken(user.getId(), roles);
 
-        return ResponseEntity.ok(token);
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", user);
+
+        return ResponseEntity.ok(response);
     }
 }

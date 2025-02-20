@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:todospring/models/task.dart';
 import 'package:todospring/models/tasks_data.dart';
 
@@ -25,6 +24,7 @@ class TaskTile extends StatelessWidget {
       trailing: Checkbox(
         value: task.done,
         onChanged: (value) {
+          print("2");
           tasksData.updateTaskDone(task); // Update the task's done status
         },
       ),

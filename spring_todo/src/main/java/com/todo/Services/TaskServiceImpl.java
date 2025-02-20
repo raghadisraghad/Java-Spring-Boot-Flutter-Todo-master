@@ -3,9 +3,13 @@ package com.todo.Services;
 import com.todo.Models.Task;
 import com.todo.Repositories.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -23,13 +27,33 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void delete(Task task) {
-        taskRepository.delete(task);
+    public ResponseEntity delete(Long id) {
+        Optional<Task> task = taskRepository.findById(id);
+        if (task.isPresent()) {
+            Task existingTask = task.get();
+            existingTask.setUser(null);
+            taskRepository.delete(existingTask);
+            return new ResponseEntity<>("Task is deleted", HttpStatus.OK);
+        }
+        return new ResponseEntity<>("Task does not exist", HttpStatus.BAD_REQUEST);
+    }
+
+    @Override
+    public ResponseEntity deleteAllTasksUser(Long id) {
+        taskRepository.deleteAllByUserId(id);
+        return new ResponseEntity<>("Tasks deleted", HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity markAllAsDone(Long id) {
+        taskRepository.markAllAsDoneByUserId(id);
+        return new ResponseEntity<>("Tasks updated", HttpStatus.OK);
     }
 
     @Override
     public Task getOne(Long id) {
-        return taskRepository.findById(id).orElse(null);
+        Task task = taskRepository.getOne(id);
+        return task;
     }
 
     @Override

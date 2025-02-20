@@ -28,7 +28,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserLogin userLogin) {
+    public ResponseEntity<?> login(@RequestBody UserLogin userLogin) {
         return authService.Login(userLogin);
     }
 }

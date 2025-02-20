@@ -12,8 +12,12 @@ class TasksData extends ChangeNotifier {
   }
 
   void updateTaskDone(Task task) {
-    task.toggle();
-    DatabaseServices.updateTask(task);
+    DatabaseServices.markAsDone(task);
+    notifyListeners();
+  }
+
+  void markAllTasksAsDone() {
+    DatabaseServices.markAllTasksAsDone();
     notifyListeners();
   }
 
@@ -25,6 +29,12 @@ class TasksData extends ChangeNotifier {
   void deleteTask(Task task) {
     tasks.remove(task);
     DatabaseServices.deleteTask(task.id);
+    notifyListeners();
+  }
+
+  void deleteAllTasks() {
+    tasks.clear();
+    DatabaseServices.deleteAllTasks();
     notifyListeners();
   }
 }

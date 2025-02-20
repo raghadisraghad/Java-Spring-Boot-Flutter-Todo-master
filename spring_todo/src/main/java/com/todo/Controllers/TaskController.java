@@ -1,6 +1,7 @@
 package com.todo.Controllers;
 
 import com.todo.Models.Task;
+import com.todo.Repositories.TaskRepository;
 import com.todo.Services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,13 +48,18 @@ public class TaskController {
         return new ResponseEntity<>(task, HttpStatus.OK);
     }
 
+    @PutMapping("/done/{id}")
+    public ResponseEntity markAllAsDone(@PathVariable Long id) {
+        return taskService.markAllAsDone(id);
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (taskService.getOne(id) != null) {
-            taskService.delete(taskService.getOne(id));
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+    public ResponseEntity delete(@PathVariable Long id) {
+        return taskService.delete(id);
+    }
+
+    @DeleteMapping("/all/{id}")
+    public ResponseEntity deleteAllTasksUser(@PathVariable Long id) {
+        return taskService.deleteAllTasksUser(id);
     }
 }

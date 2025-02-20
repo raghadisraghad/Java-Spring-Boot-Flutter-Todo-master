@@ -6,10 +6,10 @@ import 'package:todospring/models/tasks_data.dart';
 import 'package:todospring/screens/login_screen.dart'; // Import your LoginScreen
 import 'package:todospring/screens/register_screen.dart'; // Import your RegisterScreen
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 
 import '../task_tile.dart';
 import 'add_task_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -41,11 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch tasks from the database
   void getTasks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var token = prefs.getString('token');
-    Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-    String userId = decodedToken['sub'];
-    tasks = await DatabaseServices.getTasks(userId, token);
+    tasks = await DatabaseServices.getTasks();
     Provider.of<TasksData>(context, listen: false).tasks = tasks!;
     setState(() {});
   }
@@ -53,7 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Logout the user
   void logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token'); // Remove the token from local storage
+    await prefs.remove('token');
+    await prefs.remove('user'); // Remove the token from local storage
     setState(() {
       isLoggedIn = false; // Update login status
     });
@@ -71,6 +68,18 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         backgroundColor: Colors.green,
         actions: [
+          if (isLoggedIn)
+            IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
+                );
+              },
+            ),
           if (isLoggedIn) // Show Logout button if logged in
             IconButton(
               icon: const Icon(Icons.logout),
@@ -80,22 +89,51 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: isLoggedIn
           ? Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Consumer<TasksData>(
-          builder: (context, tasksData, child) {
-            return ListView.builder(
-              itemCount: tasksData.tasks.length,
-              itemBuilder: (context, index) {
-                Task task = tasksData.tasks[index];
-                return TaskTile(
-                  task: task,
-                  tasksData: tasksData,
-                );
-              },
-            );
-          },
-        ),
-      )
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Consumer<TasksData>(builder: (context, tasksData, child) {
+              return Column(
+                children: [
+                  // Only show the buttons if there are tasks
+                  if (tasksData.tasks.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            await DatabaseServices.deleteAllTasks();
+                            // Optionally, refresh tasks after deletion
+                            getTasks();
+                          },
+                          child: const Text('Delete All Tasks'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await DatabaseServices.markAllTasksAsDone();
+                            getTasks();
+                          },
+                          child: const Text('Mark All Done'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10), // Add some space between buttons and task list
+                  ],
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: tasksData.tasks.length,
+                      itemBuilder: (context, index) {
+                        Task task = tasksData.tasks[index];
+                        print(task.toString());
+                        return TaskTile(
+                          task: task,
+                          tasksData: tasksData,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }),
+          )
           : Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
