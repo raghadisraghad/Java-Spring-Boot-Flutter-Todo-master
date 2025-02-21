@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _genderController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -49,13 +50,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _emailController.text = user.email;
       _usernameController.text = user.username;
       _passwordController.text = user.password;
-      _genderController.text = user.gender;
+      _genderController.text = user.gender; // Initially set to avoid error
     });
   }
 
   void updateProfile(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Create an updated user object
       User updatedUser = User(
         id: user.id,
         firstname: _firstnameController.text,
@@ -63,11 +63,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         email: _emailController.text,
         username: _usernameController.text,
         password: _passwordController.text,
-        gender: _genderController.text,
-        created_date: user.created_date, // Preserve the original created_date
+        gender: user.gender, // Keep gender unchanged
+        created_date: user.created_date,
       );
 
-      // Use the UsersData provider to update the user
       bool isUpdated = await Provider.of<UsersData>(context, listen: false)
           .updateUser(updatedUser);
 
@@ -86,18 +85,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void deleteProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? userJson = prefs.getString('user');
-    Map<String, dynamic> userMap = userJson != null ? jsonDecode(userJson) : {};
-    user = User(
-      id: userMap['id'] ?? 0,
-      firstname: userMap['firstname'] ?? '',
-      lastname: userMap['lastname'] ?? '',
-      email: userMap['email'] ?? '',
-      username: userMap['username'] ?? '',
-      password: userMap['password'] ?? '',
-      gender: userMap['gender'] ?? '',
-      created_date: userMap['created_date'] ?? '',
-    );
     bool isDeleted = await Provider.of<UsersData>(context, listen: false)
         .deleteUser(user);
 
@@ -120,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Profile'),
         centerTitle: true,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.greenAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -128,7 +115,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // Display created_date as read-only text
               Text(
                 'Account Created: ${user.formattedCreatedDate}',
                 style: const TextStyle(
@@ -179,8 +165,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+                obscureText: _obscurePassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
@@ -191,12 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextFormField(
                 controller: _genderController,
                 decoration: const InputDecoration(labelText: 'Gender'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your gender';
-                  }
-                  return null;
-                },
+                readOnly: true, // Make gender field unchangeable
               ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -205,10 +198,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: deleteProfile,
+                onPressed: () async {
+                  bool? confirmDeleteProfile = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Delete Profile'),
+                        content: const Text('Are you sure you want to delete your profile? This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            child: const Text('Cancel'),
+                            onPressed: () {
+                              Navigator.of(context).pop(false);
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('Delete'),
+                            onPressed: () {
+                              Navigator.of(context).pop(true);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (confirmDeleteProfile == true) {
+                    deleteProfile(); // Call the delete function
+                  }
+                },
                 child: const Text('Delete Profile'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              )
             ],
           ),
         ),

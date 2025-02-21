@@ -6,6 +6,7 @@ import 'package:todospring/models/tasks_data.dart';
 import 'package:todospring/screens/login_screen.dart'; // Import your LoginScreen
 import 'package:todospring/screens/register_screen.dart'; // Import your RegisterScreen
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todospring/Screens/edit_task_screen.dart';
 
 import '../task_tile.dart';
 import 'add_task_screen.dart';
@@ -26,6 +27,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     checkLoginStatus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check if coming back from profile or edit screen
+    if (ModalRoute.of(context)?.isFirst == true) {
+      // Refresh your data or state
+      checkLoginStatus();
+    }
   }
 
   // Check if user is logged in
@@ -66,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
               : 'Todo List',
         ),
         centerTitle: true,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.greenAccent,
         actions: [
           if (isLoggedIn)
             IconButton(
@@ -100,35 +111,177 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: () async {
-                            await DatabaseServices.deleteAllTasks();
-                            // Optionally, refresh tasks after deletion
-                            getTasks();
+                            // Show confirmation dialog
+                            bool? confirmDelete = await showDialog<bool>(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Delete All Tasks'),
+                                  content: const Text('Are you sure you want to delete all tasks? This action cannot be undone.'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancel'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false); // Close dialog and return false
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: const Text('Delete'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true); // Close dialog and return true
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            // If confirmed, call deleteAllTasks
+                            if (confirmDelete == true) {
+                              await DatabaseServices.deleteAllTasks();
+                              // Optionally, refresh tasks after deletion
+                              getTasks();
+                            }
                           },
                           child: const Text('Delete All Tasks'),
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            await DatabaseServices.markAllTasksAsDone();
-                            getTasks();
+                            // Show confirmation dialog
+                            bool? confirmMarkDone = await showDialog<bool>(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Mark All Tasks as Done'),
+                                  content: const Text('Are you sure you want to mark all tasks as done?'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancel'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false); // Close dialog and return false
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: const Text('Mark All Done'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true); // Close dialog and return true
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            // If confirmed, call markAllTasksAsDone
+                            if (confirmMarkDone == true) {
+                              await DatabaseServices.markAllTasksAsDone();
+                              // Optionally, refresh tasks after marking
+                              getTasks();
+                            }
                           },
                           child: const Text('Mark All Done'),
-                        ),
+                        )
+
                       ],
                     ),
-                    const SizedBox(height: 10), // Add some space between buttons and task list
+                    const SizedBox(height: 10),
                   ],
+                  // Expanded(
+                  //   child: ListView.builder(
+                  //     itemCount: tasksData.tasks.length,
+                  //     itemBuilder: (context, index) {
+                  //       Task task = tasksData.tasks[index];
+                  //       return TaskTile(
+                  //         task: task,
+                  //         tasksData: tasksData,
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                   Expanded(
                     child: ListView.builder(
                       itemCount: tasksData.tasks.length,
                       itemBuilder: (context, index) {
                         Task task = tasksData.tasks[index];
-                        return TaskTile(
-                          task: task,
-                          tasksData: tasksData,
+                        return Column(
+                          children: [
+                            ListTile(
+                              title: Text(
+                                task.title,
+                                style: TextStyle(
+                                  decoration: task.done ? TextDecoration.lineThrough : null,
+                                  decorationColor: task.done ? Colors.greenAccent : null,
+                                  decorationThickness: 2.0,
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Edit Icon
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EditTaskScreen(task: task),
+                                        ),
+                                      ).then((updatedTask) {
+                                        if (updatedTask != null) {
+                                          tasksData.updateTask(updatedTask);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  // Delete Icon
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () {
+                                      // Show confirmation dialog
+                                      showDialog<bool>(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text('Delete Task'),
+                                            content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
+                                            actions: [
+                                              TextButton(
+                                                child: const Text('Cancel'),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog without doing anything
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: const Text('Delete'),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                  tasksData.deleteTask(task); // Call the delete function
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+
+                                  Checkbox(
+                                    value: task.done,
+                                    onChanged: (value) {
+                                      tasksData.updateTaskDone(task);
+                                    },
+                                    activeColor: Colors.greenAccent,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1, color: Colors.greenAccent),
+                          ],
                         );
                       },
                     ),
                   ),
+
                 ],
               );
             }),
@@ -165,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: isLoggedIn
           ? FloatingActionButton(
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.greenAccent,
         child: const Icon(Icons.add),
         onPressed: () {
           showModalBottomSheet(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // For making HTTP requests
 import 'dart:convert'; // For JSON encoding/decoding
-
 import 'package:todospring/Services/globals.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -18,8 +17,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController(); // Controller for email
   final _usernameController = TextEditingController(); // Controller for username
   final _passwordController = TextEditingController(); // Controller for password
-  final _genderController = TextEditingController(); // Controller for gender
+  final _confirmPasswordController = TextEditingController(); // Controller for confirm password
+  String _selectedGender = 'Female'; // Default gender selection
   String _errorMessage = ''; // To display error messages
+  bool _obscurePassword = true; // To toggle password visibility
+  bool _obscureConfirmPassword = true; // To toggle confirm password visibility
 
   // Function to handle registration
   Future<void> _register() async {
@@ -31,7 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'email': _emailController.text,
         'username': _usernameController.text,
         'password': _passwordController.text,
-        'gender': _genderController.text,
+        'gender': _selectedGender,
       };
 
       try {
@@ -136,11 +138,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                obscureText: _obscurePassword, // Hide password based on toggle
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword; // Toggle visibility
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true, // Hide password
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a password';
@@ -153,14 +165,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _genderController,
+                controller: _confirmPasswordController,
+                obscureText: _obscureConfirmPassword, // Hide confirm password based on toggle
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword; // Toggle visibility
+                      });
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedGender,
+                items: ['Female', 'Male'].map((String gender) {
+                  return DropdownMenuItem<String>(
+                    value: gender,
+                    child: Text(gender),
+                  );
+                }).toList(),
                 decoration: const InputDecoration(
                   labelText: 'Gender',
                   border: OutlineInputBorder(),
                 ),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedGender = newValue!;
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your gender';
+                    return 'Please select your gender';
                   }
                   return null;
                 },

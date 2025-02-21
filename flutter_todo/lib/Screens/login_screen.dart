@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // For local storage
 import 'package:http/http.dart' as http; // For making HTTP requests
 import 'dart:convert'; // For JSON encoding/decoding
-
 import 'package:todospring/Services/globals.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController(); // Controller for username
   final _passwordController = TextEditingController(); // Controller for password
   String _errorMessage = ''; // To display error messages
+  bool _obscurePassword = true; // To toggle password visibility
 
   // Function to handle login
   Future<void> _login() async {
@@ -36,7 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
           headers: headers,
           body: body,
         );
-
 
         // Check the response status code
         if (response.statusCode == 200) {
@@ -70,18 +69,22 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
+        backgroundColor: Colors.greenAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextFormField(
                 controller: _usernameController,
                 decoration: const InputDecoration(
                   labelText: 'Username',
                   border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -93,11 +96,23 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword; // Toggle password visibility
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true, // Hide password
+                obscureText: _obscurePassword, // Hide password
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
@@ -115,6 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: _login,
                 child: const Text('Login'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48), backgroundColor: Colors.greenAccent, // Button color
+                  textStyle: const TextStyle(fontSize: 18), // Button text style
+                ),
               ),
             ],
           ),
