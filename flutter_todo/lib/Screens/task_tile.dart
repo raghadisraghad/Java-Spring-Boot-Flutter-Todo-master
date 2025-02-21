@@ -21,13 +21,18 @@ class TaskTile extends StatelessWidget {
           decoration: task.done ? TextDecoration.lineThrough : null,
         ),
       ),
-      trailing: Checkbox(
-        value: task.done,
-        onChanged: (value) {
-          print("2");
-          tasksData.updateTaskDone(task); // Update the task's done status
+      trailing: GestureDetector(
+        onTap: () {
+          tasksData.updateTaskDone(task);
         },
+        child: Checkbox(
+          value: task.done,
+          onChanged: (value) {
+            tasksData.updateTaskDone(task);
+          },
+        ),
       ),
+
     );
   }
 }

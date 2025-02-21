@@ -122,7 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: tasksData.tasks.length,
                       itemBuilder: (context, index) {
                         Task task = tasksData.tasks[index];
-                        print(task.toString());
                         return TaskTile(
                           task: task,
                           tasksData: tasksData,

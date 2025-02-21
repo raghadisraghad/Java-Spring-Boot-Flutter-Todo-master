@@ -18,14 +18,14 @@ class TaskTile extends StatelessWidget {
           activeColor: Colors.green,
           value: task.done,
           onChanged: (checkbox) {
-            tasksData.updateTask(task);
+            tasksData.updateTaskDone(task);
           },
         ),
         title: Text(
           task.title,
           style: TextStyle(
             decoration:
-                task.done ? TextDecoration.lineThrough : TextDecoration.none,
+            task.done ? TextDecoration.lineThrough : TextDecoration.none,
           ),
         ),
         trailing: IconButton(
